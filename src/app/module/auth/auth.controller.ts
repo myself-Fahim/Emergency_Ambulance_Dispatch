@@ -3,10 +3,11 @@ import httpStatus from 'http-status'
 import { catchAsync } from '../../utils/catchAsync'
 import { sendResponse } from '../../utils/sendResponse'
 import { AuthService } from './auth.service'
+import { loginUserSchema, registerUserSchema } from './auth.validation'
 
 
 const registerCustomer = catchAsync(async (req: Request, res: Response) => {
-    const payload = req.body
+    const payload = registerUserSchema.parse(req.body)
     const result = await AuthService.registerCustomer(payload)
 
     const { accessToken, refreshToken, user} = result
@@ -39,7 +40,7 @@ const registerCustomer = catchAsync(async (req: Request, res: Response) => {
 
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
-    const payload = req.body
+    const payload = loginUserSchema.parse(req.body)
     const result = await AuthService.loginUser(payload)
     const { accessToken, refreshToken } = result
 
@@ -66,6 +67,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
         },
     })
 })
+
 
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
@@ -128,11 +130,25 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 })
 
 
+const getMyProfile = catchAsync(async (req: Request, res: Response) => {
+  
+    const result = await AuthService.getMyProfile(req.user?.userId as string)
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Profile retrieve successfully',
+        data: result
+    })
+})
+
+
 
 
 export const AuthController = {
     registerCustomer,
     loginUser,
     refreshToken,
-    googleLogin
+    googleLogin,
+    getMyProfile
 }
