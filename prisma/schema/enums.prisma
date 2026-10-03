@@ -14,3 +14,30 @@ enum AuthProvider {
   GOOGLE
   CREDENTIAL
 }
+
+
+enum DriverAvailability {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum AmbulanceType {
+  BASIC
+  ICU
+  CARDIAC
+  NEONATAL
+}
+
+enum AmbulanceStatus {
+  AVAILABLE
+  BUSY
+  MAINTENANCE
+  UNAVAILABLE
+}
+
+enum DriverApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

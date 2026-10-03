@@ -1,0 +1,14 @@
+model AmbulanceProvider {
+  id        String      @id @default(uuid())
+  name      String
+  phone     String
+  email     String
+  address   String?
+  isDeleted Boolean     @default(false)
+  deletedAt DateTime?
+  ambulance Ambulance[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("ambulance_providers")
+}

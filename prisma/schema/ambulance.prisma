@@ -1,0 +1,17 @@
+model Ambulance {
+    id                 String          @id @default(uuid())
+    registrationNumber String          @unique
+    providerId         String
+    type               AmbulanceType
+    status             AmbulanceStatus @default(AVAILABLE)
+    isDeleted          Boolean         @default(false)
+    deletedAt          DateTime?
+    createdAt          DateTime        @default(now())
+    updatedAt          DateTime        @updatedAt
+
+    provider AmbulanceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+    @@index([providerId])
+    @@index([status])
+    @@map("ambulances")
+}

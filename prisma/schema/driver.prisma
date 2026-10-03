@@ -1,0 +1,14 @@
+model Driver {
+    id                      String                  @id @default(uuid())
+    userId                  String                  @unique
+    phone                   String
+    licenseNumber           String                  @unique
+    licenseExpiry           DateTime?
+    availability            DriverAvailability      @default(AVAILABLE)
+    createdAt               DateTime                @default(now())
+    updatedAt               DateTime                @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("drivers")
+}

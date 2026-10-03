@@ -88,7 +88,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
 	}
 
 	if (user.authProvider === AuthProvider.GOOGLE) {
-		throw new Error("Can't login with credentials,try again with google login")
+		throw new Error("Can't login with credentials,try again with google login");
 	}
 
 	const isPasswordMatched = await bcrypt.compare(
@@ -285,29 +285,28 @@ const googleLogin = async (payload: googleLoginPayload) => {
 	};
 };
 
-const getMyProfile = async(user_id : string) =>{
+const getMyProfile = async (user_id: string) => {
 	const userProfile = await prisma.user.findUnique({
-		where:{
-			id:user_id
+		where: {
+			id: user_id,
 		},
-		omit:{
-			password:true,
-			googleId:true
-		}
-	})
+		omit: {
+			password: true,
+			googleId: true,
+		},
+	});
 
-	if(!userProfile){
-		throw new Error("User not found")
+	if (!userProfile) {
+		throw new Error("User not found");
 	}
 
-	return userProfile
-
-}
+	return userProfile;
+};
 
 export const AuthService = {
 	registerCustomer,
 	loginUser,
 	refreshToken,
 	googleLogin,
-	getMyProfile
+	getMyProfile,
 };
