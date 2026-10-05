@@ -1,4 +1,4 @@
-import { AmbulanceType } from "../../../generated/prisma/enums";
+import { AmbulanceStatus, AmbulanceType } from "../../../generated/prisma/enums";
 
 export interface ICreateAmbulance {
 	name: string;
@@ -10,4 +10,9 @@ export interface ICreateAmbulance {
 		registrationNumber: string;
 		type: AmbulanceType;
 	};
+}
+
+export interface IUpdateAmbulance {
+    type? : AmbulanceType,
+    status? : Exclude<AmbulanceStatus,"BUSY"> 
 }

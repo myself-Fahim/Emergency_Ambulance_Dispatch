@@ -1,5 +1,6 @@
 import z from "zod";
-import { AmbulanceType } from "../../../generated/prisma/enums";
+import { AmbulanceStatus, AmbulanceType } from "../../../generated/prisma/enums";
+import status from "http-status";
 
 export const createAmbulanceSchema = z.object({
 	name: z
@@ -29,3 +30,12 @@ export const createAmbulanceSchema = z.object({
 		),
 	}),
 });
+
+export const ambulanceParamsSchema = z.object({
+	id:z.uuid('Invalid ambulance id')
+})
+
+export const ambulanceUpdateSchema = z.object({
+	type:z.enum(AmbulanceType).optional(),
+	status:z.enum([AmbulanceStatus.AVAILABLE,AmbulanceStatus.MAINTENANCE,AmbulanceStatus.UNAVAILABLE]).optional()
+})

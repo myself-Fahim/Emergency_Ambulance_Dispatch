@@ -12,5 +12,7 @@ router.post(
 );
 router.get("/", AmbulanceController.getAllAmbulance);
 router.get("/:id", AmbulanceController.getSingleAmbulance);
+router.patch("/:id",auth(Role.ADMIN), AmbulanceController.updateAmbulance);
+router.delete('/:id',auth(Role.ADMIN),AmbulanceController.deleteAmbulance)
 
 export const AmbulanceRoutes = router;
