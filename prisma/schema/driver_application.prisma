@@ -1,16 +1,17 @@
 model DriverApplication {
-    
     id            String                  @id @default(uuid())
     name          String
-    email         String
+    email         String                  
     password      String
     phone         String
-    licenseNumber String                  @unique
+    licenseNumber String                 
     licenseExpiry DateTime?
     status        DriverApplicationStatus @default(PENDING)
+    isDeleted Boolean   @default(false)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    deletedAt DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 
     @@index([status])
     @@map("driver_applications")

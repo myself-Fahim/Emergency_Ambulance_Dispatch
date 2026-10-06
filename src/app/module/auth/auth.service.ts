@@ -29,6 +29,17 @@ const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 		throw new Error("User with this email already exists");
 	}
 
+	const isAppliedAsDriver = await prisma.driverApplication.findFirst({
+		where: {
+			email,
+			isDeleted: false,
+		},
+	});
+
+	if (isAppliedAsDriver) {
+		throw new Error("Already applied as driver can't register");
+	}
+
 	const hashedPassword = await bcrypt.hash(password, 8);
 
 	const createdUser = await prisma.user.create({
