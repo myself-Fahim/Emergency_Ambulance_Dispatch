@@ -261,7 +261,9 @@ const googleLogin = async (payload: googleLoginPayload) => {
 					googleId: googleLoginTokenPayload?.sub,
 					emailVerified: true,
 					role: Role.CUSTOMER,
-					customer: {},
+					customer: {
+						create:{}
+					},
 				},
 			});
 		}
