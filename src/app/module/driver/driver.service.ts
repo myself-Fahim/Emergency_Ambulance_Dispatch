@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import type { ICreateDriverApplication } from "./driver.interface";
-import { Role } from "../../../generated/prisma/enums";
+import { DriverApplicationStatus, Role } from "../../../generated/prisma/enums";
 
 const createDriverApplication = async (payload: ICreateDriverApplication) => {
 	const { password, ...applicationData } = payload;
@@ -82,8 +82,84 @@ const getSingleDriverApplication = async (id: string) => {
 	return application;
 };
 
+const getApplicationForPublic = async (payload: any) => {
+	const { id, email } = payload;
+
+	const application = await prisma.driverApplication.findFirst({
+		where: {
+			email,
+			id,
+			isDeleted: false,
+		},
+		omit: {
+			password: true,
+		},
+	});
+
+	if (!application) {
+		throw new Error("Driver application not found");
+	}
+
+	return application;
+};
+
+const approvedDriverApplication = async (id: string) => {
+	const result = await prisma.$transaction(async (tx) => {
+		const application = await tx.driverApplication.findUnique({
+			where: {
+				id,
+				isDeleted: false,
+			},
+		});
+
+		if (!application) {
+			throw new Error("Driver application not found");
+		}
+
+		if (application.status !== DriverApplicationStatus.PENDING) {
+			throw new Error("Driver application already been processed");
+		}
+
+		const user = await tx.user.create({
+			data: {
+				name: application.name,
+				email: application.email,
+				password: application.password,
+				role: Role.DRIVER,
+			},
+		});
+
+		const driver = await tx.driver.create({
+			data: {
+				userId: user.id,
+				phone: application.phone,
+				licenseNumber: application.licenseNumber,
+				licenseExpiry: application.licenseExpiry,
+			},
+		});
+
+		await tx.driverApplication.update({
+			where: {
+				id,
+			},
+			data: {
+				status: DriverApplicationStatus.APPROVED,
+			},
+		});
+
+		return {
+			user,
+			driver,
+		};
+	});
+
+	return result;
+};
+
 export const DriverService = {
 	createDriverApplication,
 	getAllDriverApplications,
 	getSingleDriverApplication,
+	getApplicationForPublic,
+	approvedDriverApplication,
 };

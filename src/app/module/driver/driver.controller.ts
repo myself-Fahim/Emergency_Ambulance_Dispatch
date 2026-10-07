@@ -35,6 +35,20 @@ const getAllDriverApplications = catchAsync(
 	},
 );
 
+const getApplicationForPublic = catchAsync(
+	async (req: Request, res: Response) => {
+		const payload = req.body;
+		const result = await DriverService.getApplicationForPublic(payload);
+
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Driver application retrieved successfully",
+			data: result,
+		});
+	},
+);
+
 const getSingleDriverApplication = catchAsync(
 	async (req: Request, res: Response) => {
 		const { id } = driverApplicationParamsSchema.parse(req.params);
@@ -48,9 +62,27 @@ const getSingleDriverApplication = catchAsync(
 		});
 	},
 );
+const approvedDriverApplication = catchAsync(
+	async (req: Request, res: Response) => {
+		const { id } = driverApplicationParamsSchema.parse(req.params);
+		const { user, driver } = await DriverService.approvedDriverApplication(id);
+
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Driver application approved successfully",
+			data: {
+				user,
+				driver,
+			},
+		});
+	},
+);
 
 export const DriverController = {
 	createDriverApplication,
 	getAllDriverApplications,
 	getSingleDriverApplication,
+	getApplicationForPublic,
+	approvedDriverApplication,
 };

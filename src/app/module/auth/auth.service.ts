@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/style/useConst: <explanation> */
 import bcrypt from "bcryptjs";
-import { JwtPayload, SignOptions } from "jsonwebtoken";
+import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import {
 	AuthProvider,
 	Role,
@@ -10,9 +10,9 @@ import config from "../../config";
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import {
-	googleLoginPayload,
-	ILoginUserPayload,
-	IRegisterCustomerPayload,
+	type googleLoginPayload,
+	type ILoginUserPayload,
+	type IRegisterCustomerPayload,
 	IRequestUser,
 } from "./auth.interface";
 import { googleClient } from "../../lib/googleClient";

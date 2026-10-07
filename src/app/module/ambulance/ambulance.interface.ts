@@ -1,4 +1,4 @@
-import {
+import type {
 	AmbulanceStatus,
 	AmbulanceType,
 } from "../../../generated/prisma/enums";

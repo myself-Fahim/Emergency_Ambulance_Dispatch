@@ -12,6 +12,16 @@ router.get(
 	auth(Role.ADMIN),
 	DriverController.getAllDriverApplications,
 );
-router.get("/application/:id", DriverController.getSingleDriverApplication);
+router.get("/application/public", DriverController.getApplicationForPublic);
+router.patch(
+	"/application/approved/:id",
+	auth(Role.ADMIN),
+	DriverController.approvedDriverApplication,
+);
+router.get(
+	"/application/:id",
+	auth(Role.ADMIN),
+	DriverController.getSingleDriverApplication,
+);
 
 export const DriverRoutes = router;

@@ -1,6 +1,6 @@
 import { AmbulanceStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
-import { ICreateAmbulance, IUpdateAmbulance } from "./ambulance.interface";
+import type { ICreateAmbulance, IUpdateAmbulance } from "./ambulance.interface";
 
 const createAmbulance = async (payload: ICreateAmbulance) => {
 	const { name, email, phone, ambulance } = payload;
