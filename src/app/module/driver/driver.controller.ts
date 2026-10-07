@@ -78,6 +78,19 @@ const approvedDriverApplication = catchAsync(
 		});
 	},
 );
+const rejectDriverApplication = catchAsync(
+	async (req: Request, res: Response) => {
+		const { id } = driverApplicationParamsSchema.parse(req.params);
+		const result = await DriverService.rejectDriverApplication(id);
+
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Driver application deleted successfully",
+			data: result,
+		});
+	},
+);
 
 export const DriverController = {
 	createDriverApplication,
@@ -85,4 +98,5 @@ export const DriverController = {
 	getSingleDriverApplication,
 	getApplicationForPublic,
 	approvedDriverApplication,
+	rejectDriverApplication,
 };

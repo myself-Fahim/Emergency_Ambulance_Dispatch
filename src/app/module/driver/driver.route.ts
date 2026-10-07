@@ -24,4 +24,10 @@ router.get(
 	DriverController.getSingleDriverApplication,
 );
 
+router.delete(
+	"/application/reject/:id",
+	auth(Role.ADMIN),
+	DriverController.rejectDriverApplication,
+);
+
 export const DriverRoutes = router;

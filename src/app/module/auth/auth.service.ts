@@ -262,7 +262,7 @@ const googleLogin = async (payload: googleLoginPayload) => {
 					emailVerified: true,
 					role: Role.CUSTOMER,
 					customer: {
-						create:{}
+						create: {},
 					},
 				},
 			});

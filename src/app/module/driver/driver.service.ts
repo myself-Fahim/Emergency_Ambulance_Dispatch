@@ -117,7 +117,7 @@ const approvedDriverApplication = async (id: string) => {
 		}
 
 		if (application.status !== DriverApplicationStatus.PENDING) {
-			throw new Error("Driver application already been processed");
+			throw new Error("Driver application already processed");
 		}
 
 		const user = await tx.user.create({
@@ -156,10 +156,44 @@ const approvedDriverApplication = async (id: string) => {
 	return result;
 };
 
+const rejectDriverApplication = async (id: string) => {
+	const application = await prisma.driverApplication.findUnique({
+		where: {
+			id,
+			isDeleted: false,
+		},
+	});
+
+	if (!application) {
+		throw new Error("Driver application not found");
+	}
+
+	if (application.status !== DriverApplicationStatus.PENDING) {
+		throw new Error("Driver application already processed");
+	}
+
+	const rejectedApplication = await prisma.driverApplication.update({
+		where: {
+			id,
+		},
+		data: {
+			isDeleted: true,
+			status: DriverApplicationStatus.REJECTED,
+			deletedAt: new Date(),
+		},
+		omit: {
+			password: true,
+		},
+	});
+
+	return rejectedApplication;
+};
+
 export const DriverService = {
 	createDriverApplication,
 	getAllDriverApplications,
 	getSingleDriverApplication,
 	getApplicationForPublic,
 	approvedDriverApplication,
+	rejectDriverApplication,
 };
