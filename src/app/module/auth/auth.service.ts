@@ -47,6 +47,12 @@ const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 			name,
 			email,
 			password: hashedPassword,
+			customer: {
+				create: {},
+			},
+		},
+		include: {
+			customer: true,
 		},
 		omit: { password: true },
 	});
@@ -255,6 +261,7 @@ const googleLogin = async (payload: googleLoginPayload) => {
 					googleId: googleLoginTokenPayload?.sub,
 					emailVerified: true,
 					role: Role.CUSTOMER,
+					customer: {},
 				},
 			});
 		}
@@ -301,9 +308,9 @@ const getMyProfile = async (user_id: string) => {
 		where: {
 			id: user_id,
 		},
-		omit: {
-			password: true,
-			googleId: true,
+
+		select: {
+			role: true,
 		},
 	});
 
@@ -311,7 +318,26 @@ const getMyProfile = async (user_id: string) => {
 		throw new Error("User not found");
 	}
 
-	return userProfile;
+	const include =
+		userProfile.role === Role.DRIVER
+			? { driver: true }
+			: userProfile.role === Role.CUSTOMER
+				? { customer: true }
+				: { customer: false, driver: false };
+
+	const user = await prisma.user.findUnique({
+		where: {
+			id: user_id,
+		},
+
+		omit: {
+			password: true,
+			googleId: true,
+		},
+		include,
+	});
+
+	return user;
 };
 
 export const AuthService = {
