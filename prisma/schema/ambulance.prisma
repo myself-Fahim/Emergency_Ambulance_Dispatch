@@ -9,6 +9,7 @@ model Ambulance {
     createdAt          DateTime        @default(now())
     updatedAt          DateTime        @updatedAt
 
+    bookings           Booking[]
     provider AmbulanceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 
     @@index([providerId])

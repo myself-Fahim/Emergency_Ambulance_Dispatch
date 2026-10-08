@@ -41,3 +41,35 @@ enum DriverApplicationStatus {
   APPROVED
   REJECTED
 }
+
+enum BookingEmergencyType {
+  ACCIDENT
+  CARDIAC
+  PREGNANCY
+  FIRE
+  OTHER
+}
+
+enum BookingPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BookingStatus {
+  PENDING
+  ASSIGNED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
