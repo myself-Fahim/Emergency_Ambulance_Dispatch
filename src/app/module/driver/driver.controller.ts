@@ -91,6 +91,27 @@ const rejectDriverApplication = catchAsync(
 		});
 	},
 );
+const getAllDriver = catchAsync(async (req: Request, res: Response) => {
+	const result = await DriverService.getAllDriver();
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Drivers retrieved successfully",
+		data: result,
+	});
+});
+const getSingleDriver = catchAsync(async (req: Request, res: Response) => {
+	const { id } = driverApplicationParamsSchema.parse(req.params);
+	const result = await DriverService.getSingleDriver(id);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Drivers retrieved successfully",
+		data: result,
+	});
+});
 
 export const DriverController = {
 	createDriverApplication,
@@ -99,4 +120,6 @@ export const DriverController = {
 	getApplicationForPublic,
 	approvedDriverApplication,
 	rejectDriverApplication,
+	getAllDriver,
+	getSingleDriver,
 };

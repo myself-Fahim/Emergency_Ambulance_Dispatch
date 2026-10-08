@@ -61,6 +61,10 @@ const getAllDriverApplications = async () => {
 			password: true,
 		},
 	});
+
+	if (!applications || applications.length === 0) {
+		throw new Error("No driver application found");
+	}
 	return applications;
 };
 
@@ -189,6 +193,50 @@ const rejectDriverApplication = async (id: string) => {
 	return rejectedApplication;
 };
 
+const getAllDriver = async () => {
+	const drivers = await prisma.user.findMany({
+		where: {
+			role: Role.DRIVER,
+			isDeleted: false,
+		},
+		include: {
+			driver: true,
+		},
+		omit: {
+			password: true,
+			googleId: true,
+		},
+	});
+
+	if (!drivers || drivers.length === 0) {
+		throw new Error("No driver found");
+	}
+
+	return drivers;
+};
+
+const getSingleDriver = async (id: string) => {
+	const singleDriver = await prisma.user.findUnique({
+		where: {
+			id,
+			isDeleted: false,
+		},
+		include: {
+			driver: true,
+		},
+		omit: {
+			password: true,
+			googleId: true,
+		},
+	});
+
+	if (!singleDriver) {
+		throw new Error("Driver not found");
+	}
+
+	return singleDriver;
+};
+
 export const DriverService = {
 	createDriverApplication,
 	getAllDriverApplications,
@@ -196,4 +244,6 @@ export const DriverService = {
 	getApplicationForPublic,
 	approvedDriverApplication,
 	rejectDriverApplication,
+	getAllDriver,
+	getSingleDriver,
 };
