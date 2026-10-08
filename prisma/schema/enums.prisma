@@ -52,7 +52,6 @@ enum BookingEmergencyType {
 
 enum BookingPriority {
   LOW
-  MEDIUM
   HIGH
   CRITICAL
 }

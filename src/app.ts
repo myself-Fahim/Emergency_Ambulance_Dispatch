@@ -12,6 +12,7 @@ import { notFound } from "./app/middleware/notFound";
 import { AuthRoutes } from "./app/module/auth/auth.route";
 import { AmbulanceRoutes } from "./app/module/ambulance/ambulance.route";
 import { DriverRoutes } from "./app/module/driver/driver.route";
+import { BookingRoutes } from "./app/module/booking/booking.route";
 
 const app: Application = express();
 
@@ -32,6 +33,7 @@ app.use(cookieParser());
 app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/ambulance", AmbulanceRoutes);
 app.use("/api/v1/driver", DriverRoutes);
+app.use("/api/v1/bookings", BookingRoutes);
 
 // Basic route
 app.get("/", async (req: Request, res: Response) => {
