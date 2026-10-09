@@ -3,7 +3,7 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { BookingService } from "./booking.service";
-import { createBookingSchema } from "./booking.validation";
+import { assignBookingSchema, createBookingSchema } from "./booking.validation";
 
 const createBooking = catchAsync(async (req: Request, res: Response) => {
 	const payload = createBookingSchema.parse(req.body);
@@ -57,9 +57,10 @@ const getBookingById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const assignBooking = catchAsync(async (req: Request, res: Response) => {
+	const payload = assignBookingSchema.parse(req.body);
 	const result = await BookingService.assignBooking(
 		req.params.id as string,
-		req.body,
+		payload,
 	);
 
 	sendResponse(res, {

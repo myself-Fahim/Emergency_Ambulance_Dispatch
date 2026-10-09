@@ -25,3 +25,8 @@ export const bookingFairMap: Record<ICreateBooking["ambulanceType"], number> = {
 	CARDIAC: 5000,
 	NEONATAL: 1500,
 };
+
+export interface IAssignBooking {
+	driverId: string;
+	ambulanceId: string;
+}

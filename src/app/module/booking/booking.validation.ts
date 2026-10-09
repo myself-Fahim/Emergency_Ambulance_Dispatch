@@ -22,3 +22,8 @@ export const createBookingSchema = z.object({
 		.max(500, "Destination address is too long")
 		.optional(),
 });
+
+export const assignBookingSchema = z.object({
+	driverId: z.uuid("Invalid driver ID"),
+	ambulanceId: z.uuid("Invalid ambulance ID"),
+});

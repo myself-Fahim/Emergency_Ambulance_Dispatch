@@ -1,7 +1,13 @@
-import { BookingStatus } from "../../../generated/prisma/enums";
+import { error } from "node:console";
+import {
+	AmbulanceStatus,
+	BookingStatus,
+	DriverAvailability,
+} from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import {
 	bookingFairMap,
+	IAssignBooking,
 	ICreateBooking,
 	priorityMap,
 } from "./booking.interface";
@@ -123,7 +129,117 @@ const getBookingById = async (id: string) => {
 	return booking;
 };
 
-const assignBooking = async (_id: string, _payload: unknown) => {};
+const assignBooking = async (id: string, payload: IAssignBooking) => {
+	const { driverId, ambulanceId } = payload;
+
+	const bookingAssign = await prisma.$transaction(async (tx) => {
+		const booking = await tx.booking.findUnique({
+			where: {
+				id,
+				isDeleted: false,
+			},
+		});
+
+		if (!booking) {
+			throw new Error("Booking not found");
+		}
+
+		if (booking.status !== BookingStatus.PENDING) {
+			throw new Error("Booking is already assigned");
+		}
+
+		const ambulance = await tx.ambulance.findUnique({
+			where: {
+				id: ambulanceId,
+				isDeleted: false,
+			},
+		});
+
+		if (!ambulance) {
+			throw new Error("Ambulance not found");
+		}
+
+		if (ambulance.type !== booking.ambulanceType) {
+			throw new Error("Ambulance don't match the booking requirement");
+		}
+
+		if (ambulance.status !== AmbulanceStatus.AVAILABLE) {
+			throw new Error("Ambulance is not available");
+		}
+
+		await tx.ambulance.update({
+			where: {
+				id: ambulanceId,
+				isDeleted: false,
+				status: AmbulanceStatus.AVAILABLE,
+			},
+			data: {
+				status: AmbulanceStatus.BUSY,
+			},
+		});
+
+		const driver = await tx.driver.findUnique({
+			where: {
+				id: driverId,
+				user: {
+					isDeleted: false,
+				},
+			},
+			include: {
+				user: true,
+			},
+		});
+
+		if (!driver) {
+			throw new Error("Driver not found");
+		}
+
+		if (driver.availability !== DriverAvailability.AVAILABLE) {
+			throw new Error("Driver is not available");
+		}
+
+		await tx.driver.update({
+			where: {
+				id: driverId,
+				user: {
+					isDeleted: false,
+				},
+				availability: DriverAvailability.AVAILABLE,
+			},
+			data: {
+				availability: DriverAvailability.BUSY,
+			},
+		});
+
+		const updateBooking = await tx.booking.update({
+			where: {
+				id: booking.id,
+			},
+			data: {
+				driverId,
+				ambulanceId,
+				status: BookingStatus.ASSIGNED,
+			},
+			include: {
+				driver: {
+					include: {
+						user: {
+							select: {
+								name: true,
+								email: true,
+							},
+						},
+					},
+				},
+				ambulance: true,
+			},
+		});
+
+		return updateBooking;
+	});
+
+	return bookingAssign;
+};
 
 const acceptBooking = async (_id: string) => {};
 
