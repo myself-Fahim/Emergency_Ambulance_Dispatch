@@ -10,7 +10,7 @@ router.get("/", auth(Role.ADMIN), BookingController.getAllBookings);
 router.get("/my", auth(Role.CUSTOMER), BookingController.getMyBookings);
 router.get("/:id", auth(Role.ADMIN), BookingController.getBookingById);
 router.post("/assign/:id", auth(Role.ADMIN), BookingController.assignBooking);
-router.post("/accept/:id", auth(Role.DRIVER), BookingController.acceptBooking);
+router.patch("/accept/:id", auth(Role.DRIVER), BookingController.acceptBooking);
 router.post(
 	"/start/:id",
 	auth(Role.ADMIN, Role.DRIVER),

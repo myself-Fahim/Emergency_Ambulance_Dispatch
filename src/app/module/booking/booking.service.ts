@@ -241,7 +241,60 @@ const assignBooking = async (id: string, payload: IAssignBooking) => {
 	return bookingAssign;
 };
 
-const acceptBooking = async (_id: string) => {};
+const acceptBooking = async (id: string,userId : string) => {
+
+	const acceptBooking = await prisma.$transaction(async(tx)=>{
+
+		const driver = await tx.driver.findUnique({
+			where:{
+				userId,
+				user:{
+					isDeleted:false
+				}
+			}
+		})
+
+		if(!driver){
+			throw new Error('Driver not found')
+		}
+
+		const booking = await tx.booking.findUnique({
+			where:{
+				id,
+				driverId:driver.id,
+				status:BookingStatus.ASSIGNED,
+				isDeleted:false
+			}
+		})
+
+		console.log("booking",booking);
+
+		if(!booking){
+			throw new Error("Booking not found or can't be accepted")
+		}
+
+
+		const updateBooking = await tx.booking.update({
+			where:{
+				id : booking.id,
+				status:BookingStatus.ASSIGNED,
+				isDeleted:false
+			},
+			data:{
+				status:BookingStatus.ACCEPTED
+			},
+			include:{
+				driver:true,
+				ambulance:true,	
+			}
+		})
+
+		return updateBooking
+	})
+
+	return acceptBooking
+
+};
 
 const startBooking = async (_id: string) => {};
 
