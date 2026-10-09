@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
-import type { ICreateDriverApplication } from "./driver.interface";
+import type { ICreateDriverApplication, IPublicApplication } from "./driver.interface";
 import { DriverApplicationStatus, Role } from "../../../generated/prisma/enums";
 
 const createDriverApplication = async (payload: ICreateDriverApplication) => {
@@ -86,7 +86,7 @@ const getSingleDriverApplication = async (id: string) => {
 	return application;
 };
 
-const getApplicationForPublic = async (payload: any) => {
+const getApplicationForPublic = async (payload: IPublicApplication) => {
 	const { id, email } = payload;
 
 	const application = await prisma.driverApplication.findFirst({

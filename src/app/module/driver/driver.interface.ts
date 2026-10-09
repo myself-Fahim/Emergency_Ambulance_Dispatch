@@ -10,3 +10,8 @@ export interface ICreateDriverApplication {
 export interface IDriverApplicationParams {
 	id: string;
 }
+
+export interface IPublicApplication {
+	id:string,
+	email : string
+}
