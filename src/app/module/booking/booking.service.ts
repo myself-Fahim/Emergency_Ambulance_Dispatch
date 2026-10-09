@@ -3,6 +3,7 @@ import {
 	AmbulanceStatus,
 	BookingStatus,
 	DriverAvailability,
+	PaymentStatus,
 } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import {
@@ -241,122 +242,288 @@ const assignBooking = async (id: string, payload: IAssignBooking) => {
 	return bookingAssign;
 };
 
-const acceptBooking = async (id: string,userId : string) => {
-
-	const acceptBooking = await prisma.$transaction(async(tx)=>{
-
+const acceptBooking = async (id: string, userId: string) => {
+	const acceptBooking = await prisma.$transaction(async (tx) => {
 		const driver = await tx.driver.findUnique({
-			where:{
+			where: {
 				userId,
-				user:{
-					isDeleted:false
-				}
-			}
-		})
+				user: {
+					isDeleted: false,
+				},
+			},
+		});
 
-		if(!driver){
-			throw new Error('Driver not found')
+		if (!driver) {
+			throw new Error("Driver not found");
 		}
 
 		const booking = await tx.booking.findUnique({
-			where:{
+			where: {
 				id,
-				driverId:driver.id,
-				status:BookingStatus.ASSIGNED,
-				isDeleted:false
-			}
-		})
+				driverId: driver.id,
+				status: BookingStatus.ASSIGNED,
+				isDeleted: false,
+			},
+		});
 
-
-		if(!booking){
-			throw new Error("Booking not found or can't be accepted")
+		if (!booking) {
+			throw new Error("Booking not found or can't be accepted");
 		}
 
-
 		const updateBooking = await tx.booking.update({
-			where:{
-				id : booking.id,
-				status:BookingStatus.ASSIGNED,
-				isDeleted:false
+			where: {
+				id: booking.id,
+				status: BookingStatus.ASSIGNED,
+				isDeleted: false,
 			},
-			data:{
-				status:BookingStatus.ACCEPTED
+			data: {
+				status: BookingStatus.ACCEPTED,
 			},
-			include:{
-				driver:true,
-				ambulance:true,	
-			}
-		})
+			include: {
+				driver: true,
+				ambulance: true,
+			},
+		});
 
-		return updateBooking
-	})
+		return updateBooking;
+	});
 
-	return acceptBooking
-
+	return acceptBooking;
 };
 
-const startBooking = async (id: string,userId:string) => {
+const startBooking = async (id: string, userId: string) => {
+	return await prisma.$transaction(async (tx) => {
+		const driver = await tx.driver.findUnique({
+			where: {
+				userId,
+				user: { isDeleted: false },
+			},
+		});
 
-  return await prisma.$transaction(async (tx) => {
-    const driver = await tx.driver.findUnique({
-      where: {
-        userId,
-        user: { isDeleted: false },
-      }
-    });
+		if (!driver) {
+			throw new Error("Driver not found");
+		}
 
-    if (!driver) {
-      throw new Error("Driver not found");
-    }
+		const booking = await tx.booking.findFirst({
+			where: {
+				id,
+				driverId: driver.id,
+				status: BookingStatus.ACCEPTED,
+				isDeleted: false,
+			},
+		});
 
-    const booking = await tx.booking.findFirst({
-      where: {
-        id,
-        driverId: driver.id,
-        status: BookingStatus.ACCEPTED,
-        isDeleted: false,
-      },
-    });
+		if (!booking) {
+			throw new Error("Booking not found or cannot be started");
+		}
 
-    if (!booking) {
-      throw new Error("Booking not found or cannot be started");
-    }
+		const result = await tx.booking.updateMany({
+			where: {
+				id,
+				driverId: driver.id,
+				status: BookingStatus.ACCEPTED,
+				isDeleted: false,
+			},
+			data: {
+				status: BookingStatus.IN_PROGRESS,
+			},
+		});
 
-    const result = await tx.booking.updateMany({
-      where: {
-        id,
-        driverId: driver.id,
-        status: BookingStatus.ACCEPTED,
-        isDeleted: false,
-      },
-      data: {
-        status: BookingStatus.IN_PROGRESS,
-      },
-    });
+		if (result.count === 0) {
+			throw new Error("Booking status has changed; cannot start");
+		}
 
-    if (result.count === 0) {
-      throw new Error("Booking status has changed; cannot start");
-    }
-
-    return await tx.booking.findUnique({
-      where: { id },
-      include: {
-        driver: { include: { user: {
-			select:{
-				name:true,
-				email:true,
-			}
-		} } },
-        ambulance: true,
-      },
-    });
-  });
+		return await tx.booking.findUnique({
+			where: { id },
+			include: {
+				driver: {
+					include: {
+						user: {
+							select: {
+								name: true,
+								email: true,
+							},
+						},
+					},
+				},
+				ambulance: true,
+			},
+		});
+	});
 };
 
+const completeBooking = async (id: string, userId: string) => {
+	return await prisma.$transaction(async (tx) => {
+		const driver = await tx.driver.findUnique({
+			where: {
+				userId,
+				user: { isDeleted: false },
+			},
+		});
 
-const completeBooking = async (_id: string) => {};
+		if (!driver) {
+			throw new Error("Driver not found");
+		}
 
-const cancelBooking = async (_id: string) => {};
+		const booking = await tx.booking.findFirst({
+			where: {
+				id,
+				driverId: driver.id,
+				status: BookingStatus.IN_PROGRESS,
+				isDeleted: false,
+			},
+			include: {
+				payment: true,
+			},
+		});
+
+		if (!booking) {
+			throw new Error("Booking not found or cannot be completed");
+		}
+
+		if (booking.payment?.status !== PaymentStatus.PAID) {
+			throw new Error("Payment must be completed before finishing the booking");
+		}
+
+		const result = await tx.booking.updateMany({
+			where: {
+				id,
+				driverId: driver.id,
+				status: BookingStatus.IN_PROGRESS,
+				isDeleted: false,
+			},
+			data: {
+				status: BookingStatus.COMPLETED,
+			},
+		});
+
+		if (result.count === 0) {
+			throw new Error("Booking status has changed; cannot complete");
+		}
+
+		if (booking.driverId) {
+			await tx.driver.update({
+				where: { id: booking.driverId },
+				data: { availability: DriverAvailability.AVAILABLE },
+			});
+		}
+
+		if (booking.ambulanceId) {
+			await tx.ambulance.update({
+				where: { id: booking.ambulanceId },
+				data: { status: AmbulanceStatus.AVAILABLE },
+			});
+		}
+
+		return await tx.booking.findUnique({
+			where: { id },
+			include: {
+				driver: {
+					include: {
+						user: {
+							select: {
+								name: true,
+								email: true,
+							},
+						},
+					},
+				},
+				ambulance: true,
+				payment: true,
+			},
+		});
+	});
+};
+
+const cancelBooking = async (id: string, userId: string) => {
+	return await prisma.$transaction(async (tx) => {
+		const customer = await tx.customer.findUnique({
+			where: {
+				userId,
+				user: { isDeleted: false },
+			},
+		});
+
+		if (!customer) {
+			throw new Error("Customer not found");
+		}
+
+		const booking = await tx.booking.findFirst({
+			where: {
+				id,
+				customerId: customer.id,
+				status: BookingStatus.PENDING,
+				isDeleted: false,
+			},
+		});
+
+		if (!booking) {
+			throw new Error("Booking not found or cannot be cancelled");
+		}
+
+		const result = await tx.booking.updateMany({
+			where: {
+				id,
+				customerId: customer.id,
+				status: BookingStatus.PENDING,
+				isDeleted: false,
+			},
+			data: {
+				status: BookingStatus.CANCELLED,
+				isDeleted: true,
+			},
+		});
+
+		if (result.count === 0) {
+			throw new Error("Booking status has changed; cannot cancel");
+		}
+
+		return await tx.booking.findUnique({
+			where: { id },
+		});
+	});
+};
+
+const getMyAssignedBookings = async (userId: string) => {
+	const driver = await prisma.driver.findUnique({
+		where: {
+			userId,
+			user: {
+				isDeleted: false,
+			},
+		},
+	});
+
+	if (!driver) {
+		throw new Error("Driver not found");
+	}
+
+	const booking = await prisma.booking.findMany({
+		where: {
+			driverId: driver.id,
+			status: {
+				in: [
+					BookingStatus.ASSIGNED,
+					BookingStatus.ACCEPTED,
+					BookingStatus.IN_PROGRESS,
+				],
+			},
+			isDeleted: false,
+		},
+		include: {
+			ambulance: true,
+		},
+		orderBy: {
+			createdAt: "desc",
+		},
+	});
+
+	if (!booking || booking.length === 0) {
+		throw new Error("No booking found");
+	}
+
+	return booking;
+};
 
 export const BookingService = {
 	createBooking,
@@ -368,4 +535,5 @@ export const BookingService = {
 	startBooking,
 	completeBooking,
 	cancelBooking,
+	getMyAssignedBookings,
 };

@@ -8,6 +8,11 @@ const router = Router();
 router.post("/", auth(Role.CUSTOMER), BookingController.createBooking);
 router.get("/", auth(Role.ADMIN), BookingController.getAllBookings);
 router.get("/my", auth(Role.CUSTOMER), BookingController.getMyBookings);
+router.get(
+	"/my-assign/:id",
+	auth(Role.DRIVER),
+	BookingController.myAssignedBooking,
+);
 router.get("/:id", auth(Role.ADMIN), BookingController.getBookingById);
 router.post("/assign/:id", auth(Role.ADMIN), BookingController.assignBooking);
 router.patch("/accept/:id", auth(Role.DRIVER), BookingController.acceptBooking);
@@ -16,12 +21,12 @@ router.patch(
 	auth(Role.ADMIN, Role.DRIVER),
 	BookingController.startBooking,
 );
-router.post(
+router.patch(
 	"/complete/:id",
 	auth(Role.DRIVER, Role.ADMIN),
 	BookingController.completeBooking,
 );
-router.post(
+router.patch(
 	"/cancel/:id",
 	auth(Role.CUSTOMER),
 	BookingController.cancelBooking,

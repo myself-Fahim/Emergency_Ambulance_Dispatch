@@ -71,10 +71,11 @@ const assignBooking = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
-
-
 const acceptBooking = catchAsync(async (req: Request, res: Response) => {
-	const result = await BookingService.acceptBooking(req.params.id as string,req.user?.userId as string);
+	const result = await BookingService.acceptBooking(
+		req.params.id as string,
+		req.user?.userId as string,
+	);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
@@ -84,10 +85,11 @@ const acceptBooking = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
-
-
 const startBooking = catchAsync(async (req: Request, res: Response) => {
-	const result = await BookingService.startBooking(req.params.id as string,req.user?.userId as string);
+	const result = await BookingService.startBooking(
+		req.params.id as string,
+		req.user?.userId as string,
+	);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
@@ -98,7 +100,10 @@ const startBooking = catchAsync(async (req: Request, res: Response) => {
 });
 
 const completeBooking = catchAsync(async (req: Request, res: Response) => {
-	const result = await BookingService.completeBooking(req.params.id as string);
+	const result = await BookingService.completeBooking(
+		req.params.id as string,
+		req.user?.userId as string,
+	);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
@@ -109,12 +114,28 @@ const completeBooking = catchAsync(async (req: Request, res: Response) => {
 });
 
 const cancelBooking = catchAsync(async (req: Request, res: Response) => {
-	const result = await BookingService.cancelBooking(req.params.id as string);
+	const result = await BookingService.cancelBooking(
+		req.params.id as string,
+		req.user?.userId as string,
+	);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
 		message: "Booking cancelled successfully",
+		data: result,
+	});
+});
+
+const myAssignedBooking = catchAsync(async (req: Request, res: Response) => {
+	const result = await BookingService.getMyAssignedBookings(
+		req.user?.userId as string,
+	);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Bookings retrieve successfully",
 		data: result,
 	});
 });
@@ -129,4 +150,5 @@ export const BookingController = {
 	startBooking,
 	completeBooking,
 	cancelBooking,
+	myAssignedBooking,
 };
