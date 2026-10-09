@@ -267,7 +267,6 @@ const acceptBooking = async (id: string,userId : string) => {
 			}
 		})
 
-		console.log("booking",booking);
 
 		if(!booking){
 			throw new Error("Booking not found or can't be accepted")
@@ -296,7 +295,64 @@ const acceptBooking = async (id: string,userId : string) => {
 
 };
 
-const startBooking = async (_id: string) => {};
+const startBooking = async (id: string,userId:string) => {
+
+  return await prisma.$transaction(async (tx) => {
+    const driver = await tx.driver.findUnique({
+      where: {
+        userId,
+        user: { isDeleted: false },
+      }
+    });
+
+    if (!driver) {
+      throw new Error("Driver not found");
+    }
+
+    const booking = await tx.booking.findFirst({
+      where: {
+        id,
+        driverId: driver.id,
+        status: BookingStatus.ACCEPTED,
+        isDeleted: false,
+      },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found or cannot be started");
+    }
+
+    const result = await tx.booking.updateMany({
+      where: {
+        id,
+        driverId: driver.id,
+        status: BookingStatus.ACCEPTED,
+        isDeleted: false,
+      },
+      data: {
+        status: BookingStatus.IN_PROGRESS,
+      },
+    });
+
+    if (result.count === 0) {
+      throw new Error("Booking status has changed; cannot start");
+    }
+
+    return await tx.booking.findUnique({
+      where: { id },
+      include: {
+        driver: { include: { user: {
+			select:{
+				name:true,
+				email:true,
+			}
+		} } },
+        ambulance: true,
+      },
+    });
+  });
+};
+
 
 const completeBooking = async (_id: string) => {};
 

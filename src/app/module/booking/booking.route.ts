@@ -11,7 +11,7 @@ router.get("/my", auth(Role.CUSTOMER), BookingController.getMyBookings);
 router.get("/:id", auth(Role.ADMIN), BookingController.getBookingById);
 router.post("/assign/:id", auth(Role.ADMIN), BookingController.assignBooking);
 router.patch("/accept/:id", auth(Role.DRIVER), BookingController.acceptBooking);
-router.post(
+router.patch(
 	"/start/:id",
 	auth(Role.ADMIN, Role.DRIVER),
 	BookingController.startBooking,
