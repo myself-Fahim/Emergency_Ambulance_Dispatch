@@ -18,4 +18,10 @@ export default {
 	stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET!,
 	client_base_url: process.env.CLIENT_BASE_URL,
 	google_client_id: process.env.GOOGLE_CLIENT_ID,
+	redis_user : process.env.REDIS_USER,
+	redis_password :process.env.REDIS_PASSWORD,
+	redis_host : process.env.REDIS_HOST,
+	redis_port: process.env.REDIS_PORT,
+	smtp_password : process.env.SMTP_PASSWORD,
+	smtp_user : process.env.SMTP_USER
 };

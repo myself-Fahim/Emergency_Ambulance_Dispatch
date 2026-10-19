@@ -11,6 +11,8 @@ router.post("/login", AuthController.loginUser);
 
 router.post("/refresh-token", AuthController.refreshToken);
 
+router.post("/forget-password",AuthController.forgetPassword)
+
 router.post("/google", AuthController.googleLogin);
 router.get(
 	"/me",

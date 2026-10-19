@@ -1,6 +1,8 @@
 /** biome-ignore-all lint/style/useConst: <explanation> */
 import bcrypt from "bcryptjs";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
+import crypto from "crypto"
+import ejs from "ejs"
 import {
 	AuthProvider,
 	Role,
@@ -16,6 +18,9 @@ import {
 	IRequestUser,
 } from "./auth.interface";
 import { googleClient } from "../../lib/googleClient";
+import { redisCLient } from "../../lib/redis";
+import path from "path";
+import { transporter } from "../../lib/nodemailer";
 
 const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 	const { name, password } = payload;
@@ -305,6 +310,58 @@ const googleLogin = async (payload: googleLoginPayload) => {
 	};
 };
 
+
+const forgetPassword = async (payload: any) => {
+
+	const { email } = payload
+	const isUserExists = await prisma.user.findUnique({
+		where: {
+			email,
+			isDeleted: false
+		}
+	})
+
+	if (!isUserExists) {
+		throw new Error('User not found')
+	}
+
+	if (isUserExists.authProvider === AuthProvider.GOOGLE) {
+		throw new Error("User is registered with google!")
+	}
+
+	if (isUserExists.status === UserStatus.BLOCKED) {
+		throw new Error("User is blocked")
+	}
+
+	const key = `redis-forgot-otp:${email}`
+	const otp = crypto.randomInt(100000, 1000000)
+
+	await redisCLient.set(key, otp, {
+		expiration: {
+			type: "EX",
+			value: 5 * 60
+		}
+	})
+
+	const templatePath = path.join(process.cwd(), "/src/app/templates/forgot-password.ejs")
+	const html = await ejs.renderFile(templatePath, {
+		otp,
+		userName: isUserExists.name,
+		expirationTime: 5
+	})
+
+	await transporter.sendMail({
+		from: config.smtp_user,
+		to: isUserExists.email,
+		subject: "Forget Password",
+		html
+	})
+
+
+
+
+}
+
 const getMyProfile = async (user_id: string) => {
 	const userProfile = await prisma.user.findUnique({
 		where: {
@@ -348,4 +405,5 @@ export const AuthService = {
 	refreshToken,
 	googleLogin,
 	getMyProfile,
+	forgetPassword
 };

@@ -135,10 +135,22 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const forgetPassword = catchAsync(async (req: Request, res: Response) => {
+	const result = await AuthService.forgetPassword(req.body);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Profile retrieve successfully",
+		data: result,
+	});
+});
+
 export const AuthController = {
 	registerCustomer,
 	loginUser,
 	refreshToken,
 	googleLogin,
 	getMyProfile,
+	forgetPassword
 };
