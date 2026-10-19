@@ -358,6 +358,65 @@ const forgetPassword = async (payload: any) => {
 	})
 
 
+}
+
+
+const resetPassword = async (payload: any) => {
+
+	const { email, newPassword, otp } = payload
+
+	const isUserExists = await prisma.user.findUnique({
+		where: {
+			email,
+			isDeleted: false
+		}
+	})
+
+	if (!isUserExists) {
+		throw new Error('User not found')
+	}
+
+
+	if (isUserExists.status === UserStatus.BLOCKED) {
+		throw new Error("User is blocked")
+	}
+
+	const key = `redis-forgot-otp:${email}`
+	const getRedisOtp = await redisCLient.get(key)
+
+	if (!getRedisOtp) {
+		throw new Error("Invalid OTP")
+	}
+
+	if (getRedisOtp !== otp) {
+		throw new Error("OTP doesen't matched")
+	}
+
+	const hashNewPassword = await bcrypt.hash(newPassword, 8)
+
+	await prisma.user.update({
+		where: {
+			email: isUserExists.email
+		},
+		data: {
+			password: hashNewPassword
+		},
+	})
+
+	await redisCLient.del(key)
+
+	const templatePath = path.join(process.cwd(), "/src/app/templates/changed-password.ejs")
+
+	const html = await ejs.renderFile(templatePath, {
+		userName: isUserExists.name,
+	})
+
+	await transporter.sendMail({
+		from: config.smtp_user,
+		to: isUserExists.email,
+		subject: "Reset Password",
+		html
+	})
 
 
 }
@@ -405,5 +464,6 @@ export const AuthService = {
 	refreshToken,
 	googleLogin,
 	getMyProfile,
-	forgetPassword
+	forgetPassword,
+	resetPassword
 };
