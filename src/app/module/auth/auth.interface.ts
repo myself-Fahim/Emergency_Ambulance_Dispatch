@@ -4,6 +4,10 @@ export interface ILoginUserPayload {
 	email: string;
 	password: string;
 }
+export interface IVerifyEmailPayload {
+	email: string;
+	otp:string
+}
 
 export interface IRegisterCustomerPayload {
 	name: string;

@@ -16,6 +16,7 @@ import {
 	type ILoginUserPayload,
 	type IRegisterCustomerPayload,
 	IRequestUser,
+	IVerifyEmailPayload,
 } from "./auth.interface";
 import { googleClient } from "../../lib/googleClient";
 import { redisCLient } from "../../lib/redis";
@@ -129,6 +130,101 @@ const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 	// 	refreshToken,
 	// };
 };
+
+
+const verifyEmail = async (payload: IVerifyEmailPayload) => {
+
+	const { email, otp } = payload
+
+	const isAppliedAsDriver = await prisma.driverApplication.findFirst({
+		where: {
+			email,
+			isDeleted: false,
+		},
+
+	});
+
+	if (isAppliedAsDriver) {
+		throw new Error("Already applied as driver can't register");
+	}
+
+	const key = `redis-verification-otp:${email}`
+	const payloadKey = `redis-verification-payload:${email}`
+	const redisStoreOtp = await redisCLient.get(key)
+	const redisStorePayload = await redisCLient.get(payloadKey)
+
+	if(!redisStorePayload || !redisStoreOtp){
+		throw new Error('Invalid User or OTP')
+	}
+
+	if(redisStoreOtp !==otp){
+		throw new Error("OTP doesn't matched")
+	}
+
+	const parsePayload = JSON.parse(redisStorePayload)
+
+	const createdUser = await prisma.user.create({
+		data: {
+			name:parsePayload.name,
+			email:parsePayload.email,
+			password: parsePayload.hashedPassword,
+			emailVerified:true,
+			customer: {
+				create: {},
+			},
+		},
+		include: {
+			customer: true,
+		},
+		omit: { password: true },
+	});
+
+	await redisCLient.del(key)
+	await redisCLient.del(payloadKey)
+
+
+	const templatePath = path.join(process.cwd(), "/src/app/templates/welcome-email.ejs")
+	const html = await ejs.renderFile(templatePath, {
+		otp,
+		userName: parsePayload.name,
+		expirationTime: 5
+	})
+
+	await transporter.sendMail({
+		from: config.smtp_user,
+		to: parsePayload.email,
+		subject: "Welcome To The System",
+		html
+	})
+
+
+	const { ...user } = createdUser;
+	const jwtPayload = {
+		userId: user.id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		user,
+		accessToken,
+		refreshToken,
+	};
+
+}
 
 const loginUser = async (payload: ILoginUserPayload) => {
 	const { password } = payload;
@@ -506,5 +602,6 @@ export const AuthService = {
 	googleLogin,
 	getMyProfile,
 	forgetPassword,
-	resetPassword
+	resetPassword,
+	verifyEmail
 };

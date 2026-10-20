@@ -3,7 +3,7 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AuthService } from "./auth.service";
-import { loginUserSchema, registerUserSchema } from "./auth.validation";
+import { loginUserSchema, registerUserSchema, verifyEmailSchema } from "./auth.validation";
 
 const registerCustomer = catchAsync(async (req: Request, res: Response) => {
 	const payload = registerUserSchema.parse(req.body);
@@ -14,6 +14,17 @@ const registerCustomer = catchAsync(async (req: Request, res: Response) => {
 		success: true,
 		message: "Verification OTP sent to your email",
 		data: null
+	});
+});
+const verifyEmail = catchAsync(async (req: Request, res: Response) => {
+	const payload = verifyEmailSchema.parse(req.body);
+	const result =  await AuthService.verifyEmail(payload);
+
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: "Email Verified Successfully",
+		data: result
 	});
 });
 
@@ -143,5 +154,6 @@ export const AuthController = {
 	googleLogin,
 	getMyProfile,
 	forgetPassword,
-	resetPassword
+	resetPassword,
+	verifyEmail
 };
