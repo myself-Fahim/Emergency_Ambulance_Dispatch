@@ -1,8 +1,8 @@
 /** biome-ignore-all lint/style/useConst: <explanation> */
 import bcrypt from "bcryptjs";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
-import crypto from "crypto"
-import ejs from "ejs"
+import crypto from "crypto";
+import ejs from "ejs";
 import {
 	AuthProvider,
 	Role,
@@ -46,46 +46,46 @@ const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 		throw new Error("Already applied as driver can't register");
 	}
 
-
-	const hashedPassword = await bcrypt.hash(password, 8)
+	const hashedPassword = await bcrypt.hash(password, 8);
 	const redisUserPayload = {
 		name,
 		email,
-		hashedPassword
-	}
+		hashedPassword,
+	};
 
-
-	const key = `redis-verification-otp:${email}`
-	const otp = crypto.randomInt(100000, 1000000)
+	const key = `redis-verification-otp:${email}`;
+	const otp = crypto.randomInt(100000, 1000000);
 	await redisCLient.set(key, otp, {
 		expiration: {
 			type: "EX",
-			value: 5 * 60
-		}
-	})
+			value: 5 * 60,
+		},
+	});
 
-	const payloadKey = `redis-verification-payload:${email}`
+	const payloadKey = `redis-verification-payload:${email}`;
 	await redisCLient.set(payloadKey, JSON.stringify(redisUserPayload), {
 		expiration: {
 			type: "EX",
-			value: 5 * 60
-		}
-	})
+			value: 5 * 60,
+		},
+	});
 
-
-	const templatePath = path.join(process.cwd(), "/src/app/templates/verification-email.ejs")
+	const templatePath = path.join(
+		process.cwd(),
+		"/src/app/templates/verification-email.ejs",
+	);
 	const html = await ejs.renderFile(templatePath, {
 		otp,
 		userName: name,
-		expirationTime: 5
-	})
+		expirationTime: 5,
+	});
 
 	await transporter.sendMail({
 		from: config.smtp_user,
 		to: email,
 		subject: "Email Verification",
-		html
-	})
+		html,
+	});
 
 	// const hashedPassword = await bcrypt.hash(password, 8);
 
@@ -131,44 +131,41 @@ const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 	// };
 };
 
-
 const verifyEmail = async (payload: IVerifyEmailPayload) => {
-
-	const { email, otp } = payload
+	const { email, otp } = payload;
 
 	const isAppliedAsDriver = await prisma.driverApplication.findFirst({
 		where: {
 			email,
 			isDeleted: false,
 		},
-
 	});
 
 	if (isAppliedAsDriver) {
 		throw new Error("Already applied as driver can't register");
 	}
 
-	const key = `redis-verification-otp:${email}`
-	const payloadKey = `redis-verification-payload:${email}`
-	const redisStoreOtp = await redisCLient.get(key)
-	const redisStorePayload = await redisCLient.get(payloadKey)
+	const key = `redis-verification-otp:${email}`;
+	const payloadKey = `redis-verification-payload:${email}`;
+	const redisStoreOtp = await redisCLient.get(key);
+	const redisStorePayload = await redisCLient.get(payloadKey);
 
-	if(!redisStorePayload || !redisStoreOtp){
-		throw new Error('Invalid User or OTP')
+	if (!redisStorePayload || !redisStoreOtp) {
+		throw new Error("Invalid User or OTP");
 	}
 
-	if(redisStoreOtp !==otp){
-		throw new Error("OTP doesn't matched")
+	if (redisStoreOtp !== otp) {
+		throw new Error("OTP doesn't matched");
 	}
 
-	const parsePayload = JSON.parse(redisStorePayload)
+	const parsePayload = JSON.parse(redisStorePayload);
 
 	const createdUser = await prisma.user.create({
 		data: {
-			name:parsePayload.name,
-			email:parsePayload.email,
+			name: parsePayload.name,
+			email: parsePayload.email,
 			password: parsePayload.hashedPassword,
-			emailVerified:true,
+			emailVerified: true,
 			customer: {
 				create: {},
 			},
@@ -179,24 +176,25 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 		omit: { password: true },
 	});
 
-	await redisCLient.del(key)
-	await redisCLient.del(payloadKey)
+	await redisCLient.del(key);
+	await redisCLient.del(payloadKey);
 
-
-	const templatePath = path.join(process.cwd(), "/src/app/templates/welcome-email.ejs")
+	const templatePath = path.join(
+		process.cwd(),
+		"/src/app/templates/welcome-email.ejs",
+	);
 	const html = await ejs.renderFile(templatePath, {
 		otp,
 		userName: parsePayload.name,
-		expirationTime: 5
-	})
+		expirationTime: 5,
+	});
 
 	await transporter.sendMail({
 		from: config.smtp_user,
 		to: parsePayload.email,
 		subject: "Welcome To The System",
-		html
-	})
-
+		html,
+	});
 
 	const { ...user } = createdUser;
 	const jwtPayload = {
@@ -223,8 +221,7 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 		accessToken,
 		refreshToken,
 	};
-
-}
+};
 
 const loginUser = async (payload: ILoginUserPayload) => {
 	const { password } = payload;
@@ -447,116 +444,113 @@ const googleLogin = async (payload: googleLoginPayload) => {
 	};
 };
 
-
 const forgetPassword = async (payload: any) => {
-
-	const { email } = payload
+	const { email } = payload;
 	const isUserExists = await prisma.user.findUnique({
 		where: {
 			email,
-			isDeleted: false
-		}
-	})
+			isDeleted: false,
+		},
+	});
 
 	if (!isUserExists) {
-		throw new Error('User not found')
+		throw new Error("User not found");
 	}
 
 	if (isUserExists.authProvider === AuthProvider.GOOGLE) {
-		throw new Error("User is registered with google!")
+		throw new Error("User is registered with google!");
 	}
 
 	if (isUserExists.status === UserStatus.BLOCKED) {
-		throw new Error("User is blocked")
+		throw new Error("User is blocked");
 	}
 
-	const key = `redis-forgot-otp:${email}`
-	const otp = crypto.randomInt(100000, 1000000)
+	const key = `redis-forgot-otp:${email}`;
+	const otp = crypto.randomInt(100000, 1000000);
 
 	await redisCLient.set(key, otp, {
 		expiration: {
 			type: "EX",
-			value: 5 * 60
-		}
-	})
+			value: 5 * 60,
+		},
+	});
 
-	const templatePath = path.join(process.cwd(), "/src/app/templates/forgot-password.ejs")
+	const templatePath = path.join(
+		process.cwd(),
+		"/src/app/templates/forgot-password.ejs",
+	);
 	const html = await ejs.renderFile(templatePath, {
 		otp,
 		userName: isUserExists.name,
-		expirationTime: 5
-	})
+		expirationTime: 5,
+	});
 
 	await transporter.sendMail({
 		from: config.smtp_user,
 		to: isUserExists.email,
 		subject: "Forget Password",
-		html
-	})
-
-
-}
-
+		html,
+	});
+};
 
 const resetPassword = async (payload: any) => {
-
-	const { email, newPassword, otp } = payload
+	const { email, newPassword, otp } = payload;
 
 	const isUserExists = await prisma.user.findUnique({
 		where: {
 			email,
-			isDeleted: false
-		}
-	})
+			isDeleted: false,
+		},
+	});
 
 	if (!isUserExists) {
-		throw new Error('User not found')
+		throw new Error("User not found");
 	}
-
 
 	if (isUserExists.status === UserStatus.BLOCKED) {
-		throw new Error("User is blocked")
+		throw new Error("User is blocked");
 	}
 
-	const key = `redis-forgot-otp:${email}`
-	const getRedisOtp = await redisCLient.get(key)
+	const key = `redis-forgot-otp:${email}`;
+	const getRedisOtp = await redisCLient.get(key);
 
 	if (!getRedisOtp) {
-		throw new Error("Invalid OTP")
+		throw new Error("Invalid OTP");
 	}
 
 	if (getRedisOtp !== otp) {
-		throw new Error("OTP doesen't matched")
+		throw new Error("OTP doesen't matched");
 	}
 
-	const hashNewPassword = await bcrypt.hash(newPassword, 8)
+	const hashNewPassword = await bcrypt.hash(newPassword, 8);
 
 	await prisma.user.update({
 		where: {
-			email: isUserExists.email
+			email: isUserExists.email,
 		},
 		data: {
-			password: hashNewPassword
+			password: hashNewPassword,
 		},
-	})
+	});
 
-	await redisCLient.del(key)
+	await redisCLient.del(key);
 
-	const templatePath = path.join(process.cwd(), "/src/app/templates/changed-password.ejs")
+	const templatePath = path.join(
+		process.cwd(),
+		"/src/app/templates/changed-password.ejs",
+	);
 
 	const html = await ejs.renderFile(templatePath, {
 		userName: isUserExists.name,
-	})
+	});
 
 	await transporter.sendMail({
 		from: config.smtp_user,
 		to: isUserExists.email,
 		subject: "Reset Password",
-		html
-	})
-
-
-}
+		html,
+	});
+};
 
 const getMyProfile = async (user_id: string) => {
 	const userProfile = await prisma.user.findUnique({
@@ -603,5 +597,5 @@ export const AuthService = {
 	getMyProfile,
 	forgetPassword,
 	resetPassword,
-	verifyEmail
+	verifyEmail,
 };

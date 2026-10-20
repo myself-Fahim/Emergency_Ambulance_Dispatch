@@ -6,7 +6,7 @@ export interface ILoginUserPayload {
 }
 export interface IVerifyEmailPayload {
 	email: string;
-	otp:string
+	otp: string;
 }
 
 export interface IRegisterCustomerPayload {

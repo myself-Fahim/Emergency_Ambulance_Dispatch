@@ -3,28 +3,32 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AuthService } from "./auth.service";
-import { loginUserSchema, registerUserSchema, verifyEmailSchema } from "./auth.validation";
+import {
+	loginUserSchema,
+	registerUserSchema,
+	verifyEmailSchema,
+} from "./auth.validation";
 
 const registerCustomer = catchAsync(async (req: Request, res: Response) => {
 	const payload = registerUserSchema.parse(req.body);
-	 await AuthService.registerCustomer(payload);
+	await AuthService.registerCustomer(payload);
 
 	sendResponse(res, {
 		statusCode: httpStatus.CREATED,
 		success: true,
 		message: "Verification OTP sent to your email",
-		data: null
+		data: null,
 	});
 });
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
 	const payload = verifyEmailSchema.parse(req.body);
-	const result =  await AuthService.verifyEmail(payload);
+	const result = await AuthService.verifyEmail(payload);
 
 	sendResponse(res, {
 		statusCode: httpStatus.CREATED,
 		success: true,
 		message: "Email Verified Successfully",
-		data: result
+		data: result,
 	});
 });
 
@@ -127,23 +131,23 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 });
 
 const forgetPassword = catchAsync(async (req: Request, res: Response) => {
-	 await AuthService.forgetPassword(req.body);
+	await AuthService.forgetPassword(req.body);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
 		message: "OTP sent successfully",
-		data:null
+		data: null,
 	});
 });
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
-	 await AuthService.resetPassword(req.body);
+	await AuthService.resetPassword(req.body);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
 		message: "Password changed successfully",
-		data:null
+		data: null,
 	});
 });
 
@@ -155,5 +159,5 @@ export const AuthController = {
 	getMyProfile,
 	forgetPassword,
 	resetPassword,
-	verifyEmail
+	verifyEmail,
 };

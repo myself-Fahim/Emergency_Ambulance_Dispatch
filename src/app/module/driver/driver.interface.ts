@@ -12,6 +12,6 @@ export interface IDriverApplicationParams {
 }
 
 export interface IPublicApplication {
-	id:string,
-	email : string
+	id: string;
+	email: string;
 }

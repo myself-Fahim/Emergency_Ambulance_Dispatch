@@ -10,8 +10,8 @@ const main = async () => {
 	try {
 		await prisma.$connect();
 		console.log("Connected to the database successfully.");
-		
-		await redisCLient.connect()
+
+		await redisCLient.connect();
 		console.log("Redis connected successfully");
 
 		await transporter.verify();

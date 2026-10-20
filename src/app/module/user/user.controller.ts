@@ -5,16 +5,14 @@ import { sendResponse } from "../../utils/sendResponse";
 import { UserService } from "./user.service";
 
 const uploadImage = catchAsync(async (req: Request, res: Response) => {
-
-	if(!req.file){
-		throw new Error('No image found')
+	if (!req.file) {
+		throw new Error("No image found");
 	}
 
-	
-	const uploadFile = req.file.buffer
+	const uploadFile = req.file.buffer;
 	// biome-ignore lint/style/noNonNullAssertion: <explanation>
 	// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: <explanation>
-		const result  = await UserService.uploadImage(uploadFile,req.user?.userId!);
+	const result = await UserService.uploadImage(uploadFile, req.user?.userId!);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,

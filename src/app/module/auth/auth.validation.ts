@@ -9,10 +9,8 @@ export const registerUserSchema = z.object({
 	// .regex( /[^A-Za-z0-9]/, "Password must contain at least one special character" ),
 });
 export const verifyEmailSchema = z.object({
-
 	email: z.email(),
-	otp:z.string().length(6)
-	
+	otp: z.string().length(6),
 });
 export const loginUserSchema = z.object({
 	email: z.email(),

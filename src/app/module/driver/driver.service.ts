@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
-import type { ICreateDriverApplication, IPublicApplication } from "./driver.interface";
+import type {
+	ICreateDriverApplication,
+	IPublicApplication,
+} from "./driver.interface";
 import { DriverApplicationStatus, Role } from "../../../generated/prisma/enums";
 
 const createDriverApplication = async (payload: ICreateDriverApplication) => {
