@@ -23,5 +23,8 @@ export default {
 	redis_host : process.env.REDIS_HOST,
 	redis_port: process.env.REDIS_PORT,
 	smtp_password : process.env.SMTP_PASSWORD,
-	smtp_user : process.env.SMTP_USER
+	smtp_user : process.env.SMTP_USER,
+	cloudinary_user : process.env.CLOUDINARY_USER,
+	cloudinary_key :process.env.CLOUDINARY_KEY,
+	cloudinary_secret : process.env.CLOUDINARY_SECRET,
 };

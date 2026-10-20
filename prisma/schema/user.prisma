@@ -8,6 +8,8 @@ model User {
   authProvider  AuthProvider @default(CREDENTIAL)
   role          Role         @default(CUSTOMER)
   status        UserStatus   @default(ACTIVE)
+  image         String?
+  imagePublicId String?
   isDeleted     Boolean      @default(false)
   deletedAt     DateTime?
   createdAt     DateTime     @default(now())

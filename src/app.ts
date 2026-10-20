@@ -13,6 +13,7 @@ import { AuthRoutes } from "./app/module/auth/auth.route";
 import { AmbulanceRoutes } from "./app/module/ambulance/ambulance.route";
 import { DriverRoutes } from "./app/module/driver/driver.route";
 import { BookingRoutes } from "./app/module/booking/booking.route";
+import { UserRoutes } from "./app/module/user/user.route";
 import { paymentController } from "./app/module/payment/payment.controller";
 import paymentRouter from "./app/module/payment/payment.route";
 
@@ -40,6 +41,7 @@ app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/ambulance", AmbulanceRoutes);
 app.use("/api/v1/driver", DriverRoutes);
 app.use("/api/v1/bookings", BookingRoutes);
+app.use("/api/v1/user", UserRoutes);
 app.use("/api/v1/payments", paymentRouter);
 
 // Basic route
