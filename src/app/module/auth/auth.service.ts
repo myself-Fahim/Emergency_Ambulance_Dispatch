@@ -45,48 +45,89 @@ const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 		throw new Error("Already applied as driver can't register");
 	}
 
-	const hashedPassword = await bcrypt.hash(password, 8);
 
-	const createdUser = await prisma.user.create({
-		data: {
-			name,
-			email,
-			password: hashedPassword,
-			customer: {
-				create: {},
-			},
-		},
-		include: {
-			customer: true,
-		},
-		omit: { password: true },
-	});
+	const hashedPassword = await bcrypt.hash(password, 8)
+	const redisUserPayload = {
+		name,
+		email,
+		hashedPassword
+	}
 
-	const { ...user } = createdUser;
-	const jwtPayload = {
-		userId: user.id,
-		name: user.name,
-		email: user.email,
-		role: user.role,
-	};
 
-	const accessToken = jwtUtils.createToken(
-		jwtPayload,
-		config.jwt_access_secret,
-		config.jwt_access_expires_in as SignOptions,
-	);
+	const key = `redis-verification-otp:${email}`
+	const otp = crypto.randomInt(100000, 1000000)
+	await redisCLient.set(key, otp, {
+		expiration: {
+			type: "EX",
+			value: 5 * 60
+		}
+	})
 
-	const refreshToken = jwtUtils.createToken(
-		jwtPayload,
-		config.jwt_refresh_secret,
-		config.jwt_refresh_expires_in as SignOptions,
-	);
+	const payloadKey = `redis-verification-payload:${email}`
+	await redisCLient.set(payloadKey, JSON.stringify(redisUserPayload), {
+		expiration: {
+			type: "EX",
+			value: 5 * 60
+		}
+	})
 
-	return {
-		user,
-		accessToken,
-		refreshToken,
-	};
+
+	const templatePath = path.join(process.cwd(), "/src/app/templates/verification-email.ejs")
+	const html = await ejs.renderFile(templatePath, {
+		otp,
+		userName: name,
+		expirationTime: 5
+	})
+
+	await transporter.sendMail({
+		from: config.smtp_user,
+		to: email,
+		subject: "Email Verification",
+		html
+	})
+
+	// const hashedPassword = await bcrypt.hash(password, 8);
+
+	// const createdUser = await prisma.user.create({
+	// 	data: {
+	// 		name,
+	// 		email,
+	// 		password: hashedPassword,
+	// 		customer: {
+	// 			create: {},
+	// 		},
+	// 	},
+	// 	include: {
+	// 		customer: true,
+	// 	},
+	// 	omit: { password: true },
+	// });
+
+	// const { ...user } = createdUser;
+	// const jwtPayload = {
+	// 	userId: user.id,
+	// 	name: user.name,
+	// 	email: user.email,
+	// 	role: user.role,
+	// };
+
+	// const accessToken = jwtUtils.createToken(
+	// 	jwtPayload,
+	// 	config.jwt_access_secret,
+	// 	config.jwt_access_expires_in as SignOptions,
+	// );
+
+	// const refreshToken = jwtUtils.createToken(
+	// 	jwtPayload,
+	// 	config.jwt_refresh_secret,
+	// 	config.jwt_refresh_expires_in as SignOptions,
+	// );
+
+	// return {
+	// 	user,
+	// 	accessToken,
+	// 	refreshToken,
+	// };
 };
 
 const loginUser = async (payload: ILoginUserPayload) => {
