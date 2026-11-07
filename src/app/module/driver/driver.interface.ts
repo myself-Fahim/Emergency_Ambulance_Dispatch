@@ -6,6 +6,13 @@ export interface ICreateDriverApplication {
 	licenseNumber: string;
 	licenseExpiry?: Date;
 }
+export interface IVerifyDriverApplication {
+	otp: string;
+	email: string;
+}
+export interface IBackUpOTP {
+	email: string;
+}
 
 export interface IDriverApplicationParams {
 	id: string;

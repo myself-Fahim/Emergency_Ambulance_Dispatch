@@ -16,7 +16,7 @@ import {
 	type ILoginUserPayload,
 	type IRegisterCustomerPayload,
 	IRequestUser,
-	IVerifyEmailPayload,
+	type IVerifyEmailPayload,
 } from "./auth.interface";
 import { googleClient } from "../../lib/googleClient";
 import { redisCLient } from "../../lib/redis";

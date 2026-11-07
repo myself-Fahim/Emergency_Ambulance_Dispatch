@@ -25,6 +25,8 @@ router.get(
 router.get("/:id", auth(Role.ADMIN), DriverController.getSingleDriver);
 
 router.post("/application", DriverController.createDriverApplication);
+router.post("/verify-application", DriverController.verifyDriverApplication);
+router.post("/backup-otp-sent", DriverController.backupOtpSentForEmailVerify);
 
 router.patch(
 	"/application/approved/:id",

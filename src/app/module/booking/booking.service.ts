@@ -8,8 +8,8 @@ import {
 import { prisma } from "../../lib/prisma";
 import {
 	bookingFairMap,
-	IAssignBooking,
-	ICreateBooking,
+	type IAssignBooking,
+	type ICreateBooking,
 	priorityMap,
 } from "./booking.interface";
 

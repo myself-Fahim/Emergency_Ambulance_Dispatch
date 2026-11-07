@@ -6,6 +6,7 @@ model DriverApplication {
     phone         String
     licenseNumber String                 
     licenseExpiry DateTime?
+    emailVerified Boolean      @default(false)
     status        DriverApplicationStatus @default(PENDING)
     isDeleted Boolean   @default(false)
 

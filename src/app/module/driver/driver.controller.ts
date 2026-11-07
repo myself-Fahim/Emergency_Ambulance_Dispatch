@@ -11,13 +11,39 @@ import {
 const createDriverApplication = catchAsync(
 	async (req: Request, res: Response) => {
 		const payload = createDriverApplicationSchema.parse(req.body);
-		const result = await DriverService.createDriverApplication(payload);
+		await DriverService.createDriverApplication(payload);
+
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Email verification OTP sent to your email",
+			data: null,
+		});
+	},
+);
+const verifyDriverApplication = catchAsync(
+	async (req: Request, res: Response) => {
+		const payload = req.body;
+		const result = await DriverService.verifyDriverEmail(payload);
 
 		sendResponse(res, {
 			statusCode: httpStatus.CREATED,
 			success: true,
-			message: "Driver application submitted successfully",
+			message: "Email verified and application submitted successfully",
 			data: result,
+		});
+	},
+);
+const backupOtpSentForEmailVerify = catchAsync(
+	async (req: Request, res: Response) => {
+		const payload = req.body;
+		await DriverService.backupOtpSentForEmailVerify(payload);
+
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Email verification OTP sent to your email",
+			data: null,
 		});
 	},
 );
@@ -122,4 +148,6 @@ export const DriverController = {
 	rejectDriverApplication,
 	getAllDriver,
 	getSingleDriver,
+	verifyDriverApplication,
+	backupOtpSentForEmailVerify,
 };

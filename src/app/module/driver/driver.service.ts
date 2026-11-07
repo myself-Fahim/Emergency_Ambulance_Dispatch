@@ -1,10 +1,19 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import type {
+	IBackUpOTP,
 	ICreateDriverApplication,
 	IPublicApplication,
+	IVerifyDriverApplication,
 } from "./driver.interface";
 import { DriverApplicationStatus, Role } from "../../../generated/prisma/enums";
+
+import crypto from "crypto";
+import path from "path";
+import { transporter } from "../../lib/nodemailer";
+import config from "../../config";
+import ejs from "ejs";
+import { redisCLient } from "../../lib/redis";
 
 const createDriverApplication = async (payload: ICreateDriverApplication) => {
 	const { password, ...applicationData } = payload;
@@ -42,7 +51,7 @@ const createDriverApplication = async (payload: ICreateDriverApplication) => {
 		);
 	}
 
-	const application = prisma.driverApplication.create({
+	const application = await prisma.driverApplication.create({
 		data: {
 			...applicationData,
 			password: hashedPassword,
@@ -52,7 +61,119 @@ const createDriverApplication = async (payload: ICreateDriverApplication) => {
 		},
 	});
 
+	const otp = crypto.randomInt(100000, 1000000);
+	const redisOtpKey = `driver-email-verification-otp:${application.email}`;
+
+	await redisCLient.set(redisOtpKey, otp, {
+		expiration: {
+			type: "EX",
+			value: 5 * 60,
+		},
+	});
+
+	const templatePath = path.join(
+		process.cwd(),
+		"/src/app/templates/verification-email.ejs",
+	);
+
+	const html = await ejs.renderFile(templatePath, {
+		otp,
+		expirationTime: 5,
+		userName: application.name,
+	});
+
+	await transporter.sendMail({
+		from: config.smtp_user,
+		to: application.email,
+		subject: "Driver Email Verification",
+		html,
+	});
+
 	return application;
+};
+
+const backupOtpSentForEmailVerify = async (payload: IBackUpOTP) => {
+	const { email } = payload;
+	const application = await prisma.driverApplication.findFirst({
+		where: {
+			email,
+		},
+	});
+
+	if (!application) {
+		throw new Error("Application not Found");
+	}
+
+	const otp = crypto.randomInt(100000, 1000000);
+	const redisOtpKey = `driver-email-verification-otp:${application.email}`;
+
+	await redisCLient.set(redisOtpKey, otp, {
+		expiration: {
+			type: "EX",
+			value: 5 * 60,
+		},
+	});
+
+	const templatePath = path.join(
+		process.cwd(),
+		"/src/app/templates/verification-email.ejs",
+	);
+
+	const html = await ejs.renderFile(templatePath, {
+		otp,
+		expirationTime: 5,
+		userName: application.name,
+	});
+
+	await transporter.sendMail({
+		from: config.smtp_user,
+		to: application.email,
+		subject: "Driver Email Verification",
+		html,
+	});
+};
+
+const verifyDriverEmail = async (payload: IVerifyDriverApplication) => {
+	const { email, otp } = payload;
+	const redisOtpKey = `driver-email-verification-otp:${email}`;
+	const getRedisOtp = await redisCLient.get(redisOtpKey);
+
+	const application = await prisma.driverApplication.findFirst({
+		where: {
+			email,
+			isDeleted: false,
+		},
+	});
+
+	if (!application) {
+		throw new Error("Application doesn't exist");
+	}
+
+	if (application.emailVerified) {
+		throw new Error("Email Already Verified");
+	}
+
+	if (!getRedisOtp) {
+		throw new Error("Otp is invalid");
+	}
+
+	if (getRedisOtp !== otp) {
+		throw new Error("OTP doesn't matched");
+	}
+
+	const updatedApplication = await prisma.driverApplication.update({
+		where: {
+			id: application.id,
+		},
+		data: {
+			emailVerified: true,
+		},
+		omit: {
+			password: true,
+		},
+	});
+
+	return updatedApplication;
 };
 
 const getAllDriverApplications = async () => {
@@ -127,12 +248,20 @@ const approvedDriverApplication = async (id: string) => {
 			throw new Error("Driver application already processed");
 		}
 
+		if (!application.emailVerified) {
+			throw new Error("Email is not verified for this application");
+		}
+
 		const user = await tx.user.create({
 			data: {
 				name: application.name,
 				email: application.email,
 				password: application.password,
 				role: Role.DRIVER,
+				emailVerified: true,
+			},
+			omit: {
+				password: true,
 			},
 		});
 
@@ -152,6 +281,22 @@ const approvedDriverApplication = async (id: string) => {
 			data: {
 				status: DriverApplicationStatus.APPROVED,
 			},
+		});
+
+		const templatePath = path.join(
+			process.cwd(),
+			"/src/app/templates/driver-approved.ejs",
+		);
+
+		const html = await ejs.renderFile(templatePath, {
+			userName: user.name,
+		});
+
+		await transporter.sendMail({
+			from: config.smtp_user,
+			to: user.email,
+			subject: "Driver Application Approval",
+			html,
 		});
 
 		return {
@@ -249,4 +394,6 @@ export const DriverService = {
 	rejectDriverApplication,
 	getAllDriver,
 	getSingleDriver,
+	verifyDriverEmail,
+	backupOtpSentForEmailVerify,
 };
